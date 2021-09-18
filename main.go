@@ -45,11 +45,31 @@ type boatCharacteristics struct {
 
 type boat struct {
 	boatCharacteristics
-	player player
+	player *player
 	hits   map[coord]player
 }
 
-var shipBlueprints map[string]boatCharacteristics
+// Initialisation direct avec mot "var" car on se trouve à l'extérieur d'une fonction.
+// S'applique pour n'importe quelle structure de données
+
+var shipBlueprints = map[string]boatCharacteristics{
+	"Destroyer": {
+		name: "Destroyer",
+		size: 6,
+	},
+	"Cruiser": {
+		name: "Cruiser",
+		size: 5,
+	},
+	"Hunter": {
+		name: "Hunter",
+		size: 3,
+	},
+	"Aircraft": {
+		name: "AircraftCarrier",
+		size: 10,
+	},
+}
 
 func (g *board) String() string {
 
@@ -166,18 +186,20 @@ func (g *board) addBoat(b *boat, POSITION position, x uint, y uint) error {
 func (p *player) attack(opponent *player, x uint, y uint) {
 	if opponentBoat := opponent.board.cells[x][y]; opponentBoat != nil {
 		fmt.Printf("Well done %v ! %v's %v has been hit !\n", p.name, opponent.name, opponentBoat.name)
+		opponentBoat.size--
 		opponent.board.cells[x][y] = nil
 	} else {
 		fmt.Println("Missed !")
 	}
 }
 
-func shipFactory(choice string) (*boat, error) {
+func (p *player) shipFactory(choice string) (*boat, error) {
 
 	if blueprint, inMap := shipBlueprints[choice]; inMap {
 
 		return &boat{
 			boatCharacteristics: blueprint,
+			player:              p,
 		}, nil
 	}
 
@@ -185,25 +207,6 @@ func shipFactory(choice string) (*boat, error) {
 }
 
 func main() {
-
-	shipBlueprints = map[string]boatCharacteristics{
-		"Destroyer": {
-			name: "Destroyer",
-			size: 6,
-		},
-		"Cruiser": {
-			name: "Cruiser",
-			size: 5,
-		},
-		"Hunter": {
-			name: "Hunter",
-			size: 3,
-		},
-		"Aircraft": {
-			name: "AircraftCarrier",
-			size: 10,
-		},
-	}
 
 	player1 := &player{
 		name:    "ii02735",
@@ -218,11 +221,11 @@ func main() {
 	}
 	for _, _player := range []*player{player1, player2} {
 		fmt.Printf("%v's board preparations...", _player.name)
-		ship, err := shipFactory("Destroyer")
+		ship, err := _player.shipFactory("Destroyer")
 		handleError(err)
 		err = _player.board.addBoat(ship, VERTICAL_DOWN, 0, 3)
 		handleError(err)
-		ship, err = shipFactory("Hunter")
+		ship, err = _player.shipFactory("Hunter")
 		handleError(err)
 		err = _player.board.addBoat(ship, HORIZONTAL_RIGHT, 6, 7)
 		handleError(err)
